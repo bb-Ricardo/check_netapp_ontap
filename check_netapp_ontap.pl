@@ -82,6 +82,12 @@ sub get_disk_info {
 				$hshDiskInfo{$strDiskName}{'reconstructing'} = "false";
 			}
 
+			if (defined($nahDisk->child_get("disk-raid-info")->child_get_string("container-type"))) {
+				$hshDiskInfo{$strDiskName}{'container-type'} = $nahDisk->child_get("disk-raid-info")->child_get_string("container-type");
+			} else {
+				$hshDiskInfo{$strDiskName}{'container-type'} = "undef";
+			}
+
 			if ($nahDisk->child_get("disk-raid-info")->child_get("disk-outage-info")) {
 				$hshDiskInfo{$strDiskName}{'outage'} = $nahDisk->child_get("disk-raid-info")->child_get("disk-outage-info")->child_get_string("reason");
 			} else {
@@ -98,6 +104,8 @@ sub calc_disk_health {
 	my $intState = 0;
 	my $intObjectCount = 0;
 	my $strOutput;
+	my %disk_container_type;
+	my $disk_container_stats = "";
 
 	my @aryFDRWarning = ("bypassed", "label version", "labeled broken", "LUN resized", "missing", "predict failure", "rawsize shrank", "recovering", "sanitizing", "unassigned");
 	my @aryFDRCritical = ("bad label", "failed", "init failed", "not responding", "unknown");
@@ -157,13 +165,22 @@ sub calc_disk_health {
 				}
 			}
 		}
+		if (!defined $disk_container_type{$hrefDiskInfo->{$strDisk}->{'container-type'}}) {
+			$disk_container_type{$hrefDiskInfo->{$strDisk}->{'container-type'}} = 1;
+		} else {
+			$disk_container_type{$hrefDiskInfo->{$strDisk}->{'container-type'}}++;
+		}
+	}
+
+	foreach my $disk_type (keys %disk_container_type) {
+		$disk_container_stats .= " - ".$disk_container_type{$disk_type}." ".$disk_type;
 	}
 
 	if (!(defined($strOutput))) {
 		$strOutput = "OK - No problem found ($intObjectCount checked)";
 	}
 
-	return $intState, $strOutput;
+	return $intState, $strOutput.$disk_container_stats;
 }
 
 ##############################################
