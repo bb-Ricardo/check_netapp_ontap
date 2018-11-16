@@ -2138,11 +2138,24 @@ GetOptions(
 );
 
 # Print help if a required field is not entered or if help is requested.
-if (!($strHost || $strUser || $strPassword || $strOption)) {
-	print "A required option is not set!\n";
+if (!defined $strHost || $strHost eq "" ) {
+	print "ERROR: Required option -H not set!\n";
 	help();
 }
-# Convert to lowercase to prevented unexpected things happening while trying to match the option.
+if (!defined $strUser || $strUser eq "" ) {
+	print "ERROR: Required option -u not set!\n";
+	help();
+}
+if (!defined $strPassword || $strPassword eq "" ) {
+	print "ERROR: Required option -p not set!\n";
+	help();
+}
+if (!defined $strOption || $strOption eq "" ) {
+	print "ERROR: Required option -o not set!\n";
+	help();
+}
+
+# Convert to lower case to prevented unexpected things happening while trying to match the option.
 $strOption = lc($strOption);
 
 # Create the NetApp API handle and test that the connection works.
@@ -2366,6 +2379,9 @@ if ($strOption eq "volume_health") {
 	}
 
 	($intState, $strOutput) = calc_spare_health($hrefSpareInfo, $strVHost, $strWarning, $strCritical);
+} else {
+	$intState = 3;
+	$strOutput = "UNKNOWN: option \"".$strOption."\" invalid";
 }
 
 ## FUTURE STUFF----
